@@ -25,4 +25,20 @@ Add an empty ssh file onto the boot partition of the SD card. The volume should 
 
 [cli setup](https://www.raspberrypi.org/documentation/configuration/wireless/wireless-cli.md)
 
+```
+wpa_passphrase "networkname" "testingPassword" | sudo tee -a /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null
+
+# edit wpa_supplicant.conf to remove commented password
+wpa_cli -i wlan0 reconfigure
+```
+
+Verify that the pi has a network connection by seeing `inet addr` from `ifconfig wlan0`
+
+### updating
+```
+sudo apt-get update
+sudo apt-get dist-upgrade
+curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
 
