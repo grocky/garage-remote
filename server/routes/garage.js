@@ -1,20 +1,21 @@
 const express = require('express');
 const router = express.Router();
 
-const Gpio = require('onoff').Gpio;
-const LED = new Gpio(4, 'out');
-const blinkInterval = setInterval(blinkLED, 250); //run the blinkLED function every 250ms
+const isPi = require('detect-rpi');
 
-function blinkLED() { 
+let LED = {
+  readSync: () => console.log('readSync()'),
+  writeSync: (value) => console.log('writeSync()', value),
+  write: (value, cb) => { console.log('writeSync()', value); cb(null, value); }
+};
+
+if (isPi()) {
+  console.log('Raspberry Pi detected... using real gpio')
+  const Gpio = require('onoff').Gpio;
+  LED = new Gpio(4, 'out');
+} else {
+  console.log('Using mock gpio')
 }
-
-function endBlink() { //function to stop blinking
-  clearInterval(blinkInterval); // Stop blink intervals
-  LED.writeSync(0); // Turn LED off
-  LED.unexport(); // Unexport GPIO to free resources
-}
-
-/* GET users listing. */
 
 let count = 0;
 

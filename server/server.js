@@ -14,7 +14,10 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-const buildDirectory = path.join(__dirname, ',,', 'client', 'build');
+const buildDirectory = path.join(__dirname, '..', 'client', 'build');
+
+console.log(`Using build directory: ${buildDirectory}`);
+
 app.use(express.static(buildDirectory));
 
 app.use('/garage', require('./routes/garage'));
