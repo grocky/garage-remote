@@ -2,26 +2,18 @@ const express = require('express');
 const router = express.Router();
 
 /* GET users listing. */
+
+let count = 0;
+
 router.get('/', function(req, res, next) {
+  const message = ++count % 3 === 0 
+    ? 'Oops, something bad happened' 
+    : 'garage toggle was successful';
   res.json({
     status: '200',
-    data: [
-      {
-        id: 1,
-        name: 'Rocky',
-        age: 30
-      },
-      {
-        id: 2,
-        name: 'Philip',
-        age: 6
-      },
-      {
-        id: 3,
-        name: 'Darryn',
-        age: 2
-      }
-  ]});
+    data: {
+      message
+    }});
 });
 
 module.exports = router;
