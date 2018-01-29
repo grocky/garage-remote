@@ -5,8 +5,6 @@ const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 
-const users = require('./routes/users');
-
 const app = express();
 
 // uncomment after placing your favicon in /public
@@ -17,7 +15,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'build')));
 
-app.use('/users', users);
+app.use('/garage', require('./routes/garage'));
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(`${__dirname}/build/index.html`));
