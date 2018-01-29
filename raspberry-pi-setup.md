@@ -25,6 +25,8 @@ Add an empty ssh file onto the boot partition of the SD card. The volume should 
 
 [cli setup](https://www.raspberrypi.org/documentation/configuration/wireless/wireless-cli.md)
 
+http://weworkweplay.com/play/automatically-connect-a-raspberry-pi-to-a-wifi-network/
+
 ```
 wpa_passphrase "networkname" "testingPassword" | sudo tee -a /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null
 
