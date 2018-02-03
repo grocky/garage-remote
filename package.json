@@ -4,9 +4,12 @@
   "description": "This project was bootstrapped with [Create React App](https://github.com/facebookincubator/create-react-app).",
   "main": "index.js",
   "scripts": {
-    "build": "cd client; npm install; npm run build; cd -"
+    "start:dev": "'cd client && npm start' 'cd server && npm run start:dev'"
   },
   "author": "",
   "license": "ISC",
-  "devDependencies": {}
+  "devDependencies": {},
+  "dependencies": {
+    "concurrently": "3.5.1"
+  }
 }
