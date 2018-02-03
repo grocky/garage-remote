@@ -24,12 +24,12 @@ class App extends Component {
     fetch('/garage')
       .then(res => res.json())
       .then(body => body.data)
-      .then(data => {
-        return this.setState(prev => Object.assign(prev, {
-          inFlight: false,
-          status: data.message
-        }))
-      });
+      .then(data =>
+          this.setState(prev => Object.assign(prev, {
+              inFlight: false,
+              status: data.message
+          }))
+      );
   }
 
   render() {
@@ -42,9 +42,15 @@ class App extends Component {
       <div className="App">
         <header className="App-header">
           <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to React</h1>
+          <h1 className="App-title">Garage door opener!</h1>
         </header>
-        <button onClick={this.toggleGarageButton}>Click Me</button>
+        <div className="container">
+          <div className="row">
+            <div className="col-md-4 offset-md-4">
+                <button className='btn btn-block' onClick={this.toggleGarageButton}>Click Me</button>
+            </div>
+          </div>
+        </div>
         {status}
       </div>
     );
