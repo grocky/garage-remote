@@ -41,16 +41,29 @@ const callback = (error, response) => {
     const iconList = response.images.reduce((acc, image) => {
         const isFavicon = image.name.indexOf('favicon') >= 0;
 
-        const iconDir = isFavicon ? '' : 'images/touch/';
-        const fileName = `${iconDir}/${image.name}`;
-        fs.writeFileSync(path.join(__dirname, 'public', fileName), image.contents);
+        const fullPath = (isFavicon) => {
+          const iconPath = isFavicon ? '' : 'images/touch/';
+          return path.join(__dirname, 'build', iconPath);
+        };
+
+
+        const iconDir = fullPath(isFavicon);
+        if (! fs.existsSync(iconDir)) fs.mkdirSync(iconDir);
+
+        const fileName = path.join(iconDir, image.name);
+        fs.writeFileSync(fileName, image.contents);
+
+        console.log('generating', fileName);
+
         const iconMeta = {
-            src: fileName
-            type: mime.lookup()
+            src: fileName,
+            type: mime.lookup(fileName)
         };
         return [...acc, iconMeta]
     }, []);
+
+    // TODO: update manifest to include iconList...
 };
 
-favicons.config
+// favicons.config = configuration;
 favicons(source, configuration, callback);
