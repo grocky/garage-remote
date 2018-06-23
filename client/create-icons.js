@@ -1,30 +1,31 @@
 const fs = require('fs');
+const path = require('path');
 const favicons = require('favicons');
 const source = 'src/components/App/logo-red.svg';
 const configuration = {
-    appName: 'garage-remote',
-    appDescription: null,
+    appName: 'Garage',
+    appDescription: 'Garage Remote',
     developerName: 'grocky',
     developerURL: 'https://www.rockygray.com',
-    background: '#fff',
-    theme_color: '#fff',
+    background: '#e1e1e1',
+    theme_color: '#cf180a',
     path: '/',
     display: 'standalone',
     orientation: 'portrait',
-    start_url: '/?homescreen=1',
+    start_url: '/?utm_source=homescreen',
     version: '1.0',
-    logging: true,
+    logging: false,
     online: false,
     preferOnline: false,
     icons: {
-        android: false,              // Create Android homescreen icon. `boolean` or `{ offset, background, shadow }`
-        appleIcon: false,            // Create Apple touch icons. `boolean` or `{ offset, background }`
-        appleStartup: false,         // Create Apple startup images. `boolean` or `{ offset, background }`
-        coast: false,      // Create Opera Coast icon with offset 25%. `boolean` or `{ offset, background }`
+        android: true,             // Create Android homescreen icon. `boolean` or `{ offset, background, shadow }`
+        appleIcon: true,           // Create Apple touch icons. `boolean` or `{ offset, background }`
+        appleStartup: true,        // Create Apple startup images. `boolean` or `{ offset, background }`
+        coast: false,               // Create Opera Coast icon with offset 25%. `boolean` or `{ offset, background }`
         favicons: true,             // Create regular favicons. `boolean`
-        firefox: false,              // Create Firefox OS icons. `boolean` or `{ offset, background }`
-        windows: false,              // Create Windows 8 tile icons. `boolean` or `{ background }`
-        yandex: false                // Create Yandex browser icon. `boolean` or `{ background }`
+        firefox: true,             // Create Firefox OS icons. `boolean` or `{ offset, background }`
+        windows: false,             // Create Windows 8 tile icons. `boolean` or `{ background }`
+        yandex: false               // Create Yandex browser icon. `boolean` or `{ background }`
     }
 };
 const callback = (error, response) => {
@@ -34,7 +35,22 @@ const callback = (error, response) => {
         console.log(error.message); // Error description e.g. 'An unknown error has occurred'
         return;
     }
-    response.images.forEach(image => fs.writeFileSync(`public/${image.name}`, image.contents));
+
+    const mime = require('mime-types');
+
+    const iconList = response.images.reduce((acc, image) => {
+        const isFavicon = image.name.indexOf('favicon') >= 0;
+
+        const iconDir = isFavicon ? '' : 'images/touch/';
+        const fileName = `${iconDir}/${image.name}`;
+        fs.writeFileSync(path.join(__dirname, 'public', fileName), image.contents);
+        const iconMeta = {
+            src: fileName
+            type: mime.lookup()
+        };
+        return [...acc, iconMeta]
+    }, []);
 };
 
+favicons.config
 favicons(source, configuration, callback);

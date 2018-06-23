@@ -1,15 +1,16 @@
 {
   "name": "garage-remote",
   "version": "1.0.0",
-  "description": "This project was bootstrapped with [Create React App](https://github.com/facebookincubator/create-react-app).",
+  "private": true,
+  "description": "Garage remote served on a Raspberry Pi",
   "main": "index.js",
   "scripts": {
     "start:dev": "concurrently 'node start-app.js client' 'node start-app.js server'"
   },
   "author": "",
   "license": "ISC",
-  "devDependencies": {},
-  "dependencies": {
+  "devDependencies": {
     "concurrently": "3.5.1"
-  }
+  },
+  "dependencies": {}
 }
