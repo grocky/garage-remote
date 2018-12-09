@@ -40,7 +40,9 @@
       command: pm2 delete {{ project_name }}
       ignore_errors: yes
     - name: Start pm2
-      command: PORT=80 NODE_ENV=prod pm2 start {{ current_path }}/server/bin/www --name {{ project_name }}
+      shell: PORT=80 NODE_ENV=prod pm2 start server/bin/www --name {{ project_name }}
+      args:
+        chdir: "{{ current_path }}"
     - name: Delete old dir
       shell: rm -rf {{ current_release_path.stdout }}/
       when: current_release_path.stdout != current_path
