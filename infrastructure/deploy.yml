@@ -25,6 +25,7 @@
       git:
         repo: "{{ git_repo_url }}"
         dest: "{{ release_path }}"
+        version: deployment
     - name: Fetch client dependencies
       npm:
         path={{ release_path }}/client
