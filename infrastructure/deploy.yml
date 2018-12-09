@@ -28,6 +28,10 @@
     - name: Fetch client dependencies
       npm:
         path={{ release_path }}/client
+    - name: Build client
+      shell: make build
+      args:
+        chdir: "{{ release_path }}"
     - name: Fetch server dependencies
       npm:
         path={{ release_path }}/server
