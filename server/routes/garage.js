@@ -1,32 +1,33 @@
 const express = require('express');
 const router = express.Router();
+const Gpio = require('onoff').Gpio;
+
+const log = (msg) => console.log(`${new Date()} - ${msg}`);
 
 const isPi = require('detect-rpi');
 
 let garageButton = {
-  readSync: () => console.log('readSync()'),
-  writeSync: (value) => console.log('writeSync()', value),
-  write: (value, cb) => { console.log('writeSync()', value); cb(null, value); }
+  readSync: () => log('readSync()'),
+  writeSync: (value) => log('writeSync()', value),
+  write: (value, cb) => { log('writeSync()', value); cb(null, value); }
 };
 
 if (isPi()) {
-  console.log('Raspberry Pi detected... using real gpio')
-  const Gpio = require('onoff').Gpio;
+  log('Raspberry Pi detected... using real gpio');
   garageButton = new Gpio(4, 'out');
 } else {
-  console.log('Using mock gpio')
+  log('Using mock gpio');
 }
 
 // start it high (relay deactivated...)
-garageButton.writeSync(1);
-
-let count = 0;
+garageButton.writeSync(Gpio.HIGH);
 
 router.get('/', function(req, res, next) {
   let message = '';
 
   if (garageButton.readSync() === 0) {
     message = 'garage toggle is already in progress';
+    log(message);
     res.json({
       status: '200',
       data: {
@@ -34,14 +35,12 @@ router.get('/', function(req, res, next) {
       }
     });
   } else {
-    message = 'garage toggle successful'
-    garageButton.writeSync(0);
+    garageButton.writeSync(Gpio.LOW);
     setTimeout(() => {
-      garageButton.write(1, (err, value) => {
-        const response = err 
-          ? {data: {message: err.message }}
-          : {data: {message: `garage button state set to ${value}`}}
-        res.json(response)
+      garageButton.write(Gpio.HIGH, (err, value) => {
+        const message = err ? err.message : `garage button state set to ${value}`;
+        log(message);
+        res.json({ datea: { message }})
       });
     }, 500)
   }
