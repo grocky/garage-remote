@@ -1,0 +1,46 @@
+---
+- hosts: raspberrypi1
+  vars:
+    project_path: /home/pi/garage-remote
+    git_repo_url: https://github.com/grocky/garage-remote.git
+    project_name: garage-remote
+  tasks:
+    - name: Set release paths
+      set_fact:
+        release_path: "{{ project_path }}/releases/{{ lookup('pipe','date +%Y%m%d%H%M%S') }}"
+        current_path: "{{ project_path }}/current"
+    - name: Retrieve current release folder
+      command: readlink -f current
+      register: current_release_path
+      ignore_errors: yes
+      args:
+        chdir: "{{ project_path }}"
+    - name: Create new folder
+      file:
+        dest={{ release_path }}
+        mode=0755
+        recurse=yes
+        state=directory
+    - name: Clone the repository
+      git:
+        repo: "{{ git_repo_url }}"
+        dest: "{{ release_path }}"
+    - name: Fetch client dependencies
+      npm:
+        path={{ release_path }}/client
+    - name: Fetch server dependencies
+      npm:
+        path={{ release_path }}/server
+    - name: Update symlink
+      file:
+        src={{ release_path }}
+        dest={{ current_path }}
+        state=link
+    - name: Delete old pm2 process
+      command: pm2 delete {{ project_name }}
+      ignore_errors: yes
+    - name: Start pm2
+      command: PORT=80 NODE_ENV=prod pm2 start {{ current_path }}/server/bin/www --name {{ project_name }}
+    - name: Delete old dir
+      shell: rm -rf {{ current_release_path.stdout }}/
+      when: current_release_path.stdout != current_path
