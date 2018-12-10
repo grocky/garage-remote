@@ -2,20 +2,27 @@ const mqtt = require('mqtt');
 
 const { MQTT_HOST = 'localhost' } = process.env;
 
-const client  = mqtt.connect(`mqtt://${MQTT_HOST}`, { clientId: 'garage-door-switch'});
+const client  = mqtt.connect(`mqtt://${MQTT_HOST}`, { clientId: 'controller'});
 
 const log = (msg) => console.log(`${new Date()} - ${msg}`);
 
-let state = 'closed';
-
-client.on('connect', () => {
-  client.publish('garage/connected', 'true');
-  client.subscribe('garage/button_press')
-});
+let garageState = '';
+let connected = false;
 
 const topicHandlers = {
-  'garage/button_press': (message) => log(`Button pressed: ${message}`),
+  'garage/connected': (message) => {
+    log(`garage/connected - ${message}`);
+    connected = message.toString() === 'true';
+  },
+  'garage/state': (message) => {
+    garageState = message;
+    log(`garage state updated to ${message}`);
+  }
 };
+
+client.on('connect', () => {
+  Object.keys(topicHandlers).forEach(topic => client.subscribe(topic));
+});
 
 client.on('message', (topic, message) => {
   const noOp = () => {};
@@ -27,7 +34,6 @@ client.on('message', (topic, message) => {
 const cleanup = (cb) => {
   log('closing mqtt connection');
   const force = false;
-  client.publish('garage/connected', 'false');
   const done = () => {
     log('mqtt connection closed');
     cb();
