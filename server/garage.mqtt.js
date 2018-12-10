@@ -9,9 +9,62 @@ const log = require('./logger');
 
 let state = 'closed';
 
+const isPi = require('detect-rpi');
+
+let garageButton = {
+  readSync: () => log('readSync()'),
+  writeSync: (value) => log(`writeSync() ${value}`),
+  write: (value, cb) => { log(`writeSync() ${value}`); cb(null, value); }
+};
+
+if (isPi()) {
+  log('Raspberry Pi detected... using real gpio');
+  const Gpio = require('onoff').Gpio;
+  garageButton = new Gpio(4, 'out');
+} else {
+  log('Using mock gpio');
+}
+
+const levels = {
+  HIGH: 1,
+  LOW: 0,
+};
+
+// start it high (relay deactivated...)
+log('Starting GPIO pin on hi');
+garageButton.writeSync(levels.HIGH);
+
+garageButton.depress = () => {
+  garageButton.writeSync(levels.LOW);
+  setTimeout(() => {
+    garageButton.write(levels.HIGH, (err, value) => {
+      const message = err ? err.message : `garage button state set to ${value}`;
+      log(message);
+    });
+  }, 500);
+};
+
 const topicHandlers = {
-  'garage/open': (message) => log(`open: ${message}`),
-  'garage/close': (message) => log(`close: ${message}`),
+  'garage/open': (message) => {
+    if (state !== 'open' && state !== 'opening') {
+      log('opening garage door');
+      state = 'opening';
+      sendStateUpdate();
+
+      garageButton.depress();
+
+      // simulate door open after 5 seconds (would be listening to hardware)
+      setTimeout(() => {
+        state = 'open';
+        sendStateUpdate();
+      }, 5000)
+    }
+  },
+  'garage/close': (message) => {
+    state = 'closed';
+    sendStateUpdate();
+    log(`close: ${message}`);
+  }
 };
 
 client.on('connect', () => {
