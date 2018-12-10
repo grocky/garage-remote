@@ -4,6 +4,9 @@ const favicon = require('serve-favicon');
 const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
+const mqttController = require('./middleware/controller.mqtt');
+
+const log = require('./logger');
 
 const app = express();
 
@@ -19,6 +22,30 @@ const buildDirectory = path.join(__dirname, '..', 'client', 'build');
 console.log(`Using build directory: ${buildDirectory}`);
 
 app.use(express.static(buildDirectory));
+
+const mqttState = {
+  garageState: '',
+  connected: false,
+};
+
+const mqttTopicHandlers = {
+  'garage/connected': (message) => {
+    log(`garage/connected - ${message}`);
+    mqttState.connected = message.toString() === 'true';
+  },
+  'garage/state': (message) => {
+    mqttState.garageState = message;
+    log(`garage state updated to ${message}`);
+  }
+};
+
+mqttController.clientInitializer({
+  host: process.env.MQTT_HOST || 'localhost',
+  clientId: 'controller',
+  topicHandlers: mqttTopicHandlers,
+});
+
+app.use(mqttController.middleware);
 
 app.use('/garage', require('./routes/garage'));
 
@@ -41,8 +68,6 @@ app.use(function(err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
-  res.render('error');
 });
 
 module.exports = app;
-

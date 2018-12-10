@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const Gpio = require('onoff').Gpio;
 
-const log = (msg) => console.log(`${new Date()} - ${msg}`);
+const log = require('../logger');
 
 const isPi = require('detect-rpi');
 
@@ -14,18 +13,24 @@ let garageButton = {
 
 if (isPi()) {
   log('Raspberry Pi detected... using real gpio');
+  const Gpio = require('onoff').Gpio;
   garageButton = new Gpio(4, 'out');
 } else {
   log('Using mock gpio');
 }
 
+const levels = {
+  HIGH: 1,
+  LOW: 0,
+};
+
 // start it high (relay deactivated...)
-garageButton.writeSync(Gpio.HIGH);
+garageButton.writeSync(levels.HIGH);
 
 router.get('/', function(req, res, next) {
   let message = '';
 
-  if (garageButton.readSync() === 0) {
+  if (garageButton.readSync() === levels.LOW) {
     message = 'garage toggle is already in progress';
     log(message);
     res.json({
@@ -35,9 +40,9 @@ router.get('/', function(req, res, next) {
       }
     });
   } else {
-    garageButton.writeSync(Gpio.LOW);
+    garageButton.writeSync(levels.LOW);
     setTimeout(() => {
-      garageButton.write(Gpio.HIGH, (err, value) => {
+      garageButton.write(levels.HIGH, (err, value) => {
         const message = err ? err.message : `garage button state set to ${value}`;
         log(message);
         res.json({ datea: { message }})

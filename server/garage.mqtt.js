@@ -1,10 +1,11 @@
 const mqtt = require('mqtt');
+const Cleanup = require('./cleanup');
 
 const { MQTT_HOST = 'localhost' } = process.env;
 
 const client = mqtt.connect(`mqtt://${MQTT_HOST}`, { clientId: 'garage-door-switch'});
 
-const log = (msg) => console.log(`${new Date()} - ${msg}`);
+const log = require('./logger');
 
 let state = 'closed';
 
@@ -33,34 +34,11 @@ const sendStateUpdate = () => {
   client.publish('garage/state', state)
 };
 
-const cleanup = (cb) => {
-  log('closing mqtt connection');
-  const force = false;
-  client.publish('garage/connected', 'false');
-  const done = () => {
-    log('mqtt connection closed');
-    cb();
-  };
-  client.end(force, done);
-};
-
-process.on('cleanup', () => cleanup(() => process.exit()));
-
-process.on('exit', () => log('Done.'));
-
-// catching signals and do something before exit
-['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT',
-  'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'
-].forEach((sig) => {
-  process.on(sig, () => {
-    log(`signal: ${sig}`);
-    process.emit('cleanup');
+Cleanup(() => {
+  return new Promise((res, rej) => {
+    client.publish('garage/connected', 'false');
+    log('closing mqtt connection');
+    const force = false;
+    client.end(force, res);
   });
-});
-
-//catch uncaught exceptions, trace, then exit normally
-process.on('uncaughtException', (e) => {
-  log('Uncaught Exception...');
-  log(e.stack);
-  process.exit(99);
 });
