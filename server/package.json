@@ -19,6 +19,7 @@
     "start:dev": "nodemon ./bin/www"
   },
   "devDependencies": {
+    "mqtt": "2.18.8",
     "nodemon": "1.14.11"
   }
 }
