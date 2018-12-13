@@ -5,6 +5,7 @@ const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const mqttController = require('./middleware/controller.mqtt');
+const Statemanager = require('./middleware/garage-state');
 
 const log = require('./logger')(module);
 
@@ -23,19 +24,22 @@ log(`Using build directory: ${buildDirectory}`);
 
 app.use(express.static(buildDirectory));
 
-const mqttState = {
-  garageState: '',
-  connected: false,
-};
+const stateManager = new Statemanager('garage-state.json');
+
+const THIRTY_SECONDS_IN_MS = 1000 * 30;
+
+setInterval(async () => await stateManager.storeState(), THIRTY_SECONDS_IN_MS);
+
+app.use(Statemanager.middleware(stateManager));
 
 const mqttTopicHandlers = {
-  'garage/connected': (message) => {
+  'garage/connected': async (message) => {
     log(`garage/connected - ${message}`);
-    mqttState.connected = message.toString() === 'true';
+    await stateManager.updateState({ connected: message.toString() === 'true' });
   },
-  'garage/state': (message) => {
-    mqttState.garageState = message;
+  'garage/state': async (message) => {
     log(`garage state updated to ${message}`);
+    await stateManager.updateState({ status: message.toString() });
   }
 };
 
