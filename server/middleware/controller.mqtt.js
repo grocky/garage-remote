@@ -1,12 +1,24 @@
 const mqtt = require('mqtt');
 const Cleanup = require('../cleanup');
 
-const log = (msg) => console.log(`${new Date()} - ${msg}`);
+const log = require('../logger')(module);
 
 let client;
 
-const clientInitializer = (options) => {
-  const { host = 'localhost', clientId, topicHandlers } = options;
+/**
+ * @typedef {function(message): void} MessageHandler - A handler for a topic's message
+ */
+/**
+ * @typedef {Object<string, MessageHandler>} TopicHandlers - A map of topics to their MessageHandler
+ */
+
+/**
+ * @param {string} host - the mqtt broker hostname
+ * @param {string} clientId - the identifier for this client
+ * @param {MessageHandler} topicHandlers
+ * @return {MqttClient}
+ */
+const clientInitializer = ({ host, clientId, topicHandlers }) => {
   client  = mqtt.connect(`mqtt://${host}`, { clientId });
 
   client.on('connect', () => {
@@ -25,6 +37,8 @@ const clientInitializer = (options) => {
     const force = false;
     client.end(force, res);
   }));
+
+  return client;
 };
 
 const middleware = (req, res, next) => {
@@ -33,6 +47,6 @@ const middleware = (req, res, next) => {
 };
 
 module.exports = {
-  clientInitializer,
-  middleware,
+  clientInitializer: clientInitializer,
+  middleware: middleware,
 };

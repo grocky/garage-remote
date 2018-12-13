@@ -81,13 +81,18 @@ const topicHandlers = {
       sendStateUpdate();
     }, 1000 * 11);
     log(`close: ${message}`);
-  }
+  },
+  'garage/ping': (message) => {
+    log('received PING');
+    sendConnectionUpdate();
+    sendStateUpdate();
+  },
 };
 
 client.on('connect', () => {
   Object.keys(topicHandlers).forEach(topic => client.subscribe(topic));
 
-  client.publish('garage/connected', 'true');
+  sendConnectionUpdate();
   sendStateUpdate();
 });
 
@@ -97,6 +102,10 @@ client.on('message', (topic, message) => {
 
   handler(message);
 });
+
+const sendConnectionUpdate = () => {
+  client.publish('garage/connected', 'true');
+};
 
 // added to end of garage.js
 const sendStateUpdate = () => {

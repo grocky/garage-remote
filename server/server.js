@@ -40,11 +40,13 @@ const mqttTopicHandlers = {
   }
 };
 
-mqttController.clientInitializer({
+const mqttClient = mqttController.clientInitializer({
   host: process.env.MQTT_HOST || 'localhost',
   clientId: 'controller',
   topicHandlers: mqttTopicHandlers,
 });
+
+mqttClient.publish('garage/ping', 'true', log);
 
 app.use(mqttController.middleware);
 
