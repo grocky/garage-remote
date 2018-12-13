@@ -7,6 +7,7 @@ const client = mqtt.connect(`mqtt://${MQTT_HOST}`, { clientId: 'garage-door-swit
 
 const log = require('./logger')(module);
 
+// Always restart the state to closed on reboot for now...
 let state = 'closed';
 
 const isPi = require('detect-rpi');
@@ -46,23 +47,39 @@ garageButton.depress = () => {
 
 const topicHandlers = {
   'garage/open': (message) => {
-    if (state !== 'open' && state !== 'opening') {
-      log('opening garage door');
-      state = 'opening';
-      sendStateUpdate();
-
-      garageButton.depress();
-
-      // simulate door open after 5 seconds (would be listening to hardware)
-      setTimeout(() => {
-        state = 'open';
-        sendStateUpdate();
-      }, 5000)
+    if (state === 'open' || state === 'opening') {
+      return sendStateUpdate();
     }
+
+    log('opening garage door');
+    state = 'opening';
+    sendStateUpdate();
+
+    garageButton.depress();
+
+    // simulate door open after 5 seconds (would be listening to hardware)
+    setTimeout(() => {
+      log('garage door finished opening');
+      state = 'open';
+      sendStateUpdate();
+    }, 1000 * 11)
   },
   'garage/close': (message) => {
-    state = 'closed';
+    if (state === 'closed' || state === 'closing') {
+      return sendStateUpdate();
+    }
+
+    log('closing garage door');
+    state = 'closing';
     sendStateUpdate();
+
+    garageButton.depress();
+
+    setTimeout(() => {
+      log('garage door finished closing');
+      state = 'closed';
+      sendStateUpdate();
+    }, 1000 * 11);
     log(`close: ${message}`);
   }
 };
