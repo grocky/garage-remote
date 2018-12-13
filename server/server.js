@@ -26,10 +26,6 @@ app.use(express.static(buildDirectory));
 
 const stateManager = new Statemanager('garage-state.json');
 
-const THIRTY_SECONDS_IN_MS = 1000 * 30;
-
-setInterval(async () => await stateManager.storeState(), THIRTY_SECONDS_IN_MS);
-
 app.use(Statemanager.middleware(stateManager));
 
 const mqttTopicHandlers = {
@@ -40,6 +36,7 @@ const mqttTopicHandlers = {
   'garage/state': async (message) => {
     log(`garage state updated to ${message}`);
     await stateManager.updateState({ status: message.toString() });
+    await stateManager.storeState();
   }
 };
 
