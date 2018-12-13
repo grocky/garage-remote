@@ -26,7 +26,7 @@
       git:
         repo: "{{ git_repo_url }}"
         dest: "{{ release_path }}"
-        version: master
+        version: mqtt
     - name: Fetch client dependencies
       npm:
         path={{ release_path }}/client
