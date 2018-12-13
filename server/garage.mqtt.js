@@ -5,7 +5,7 @@ const { MQTT_HOST = 'localhost' } = process.env;
 
 const client = mqtt.connect(`mqtt://${MQTT_HOST}`, { clientId: 'garage-door-switch'});
 
-const log = require('./logger');
+const log = require('./logger')(module);
 
 let state = 'closed';
 

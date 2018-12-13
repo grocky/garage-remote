@@ -6,7 +6,7 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const mqttController = require('./middleware/controller.mqtt');
 
-const log = require('./logger');
+const log = require('./logger')(module);
 
 const app = express();
 
@@ -19,7 +19,7 @@ app.use(cookieParser());
 
 const buildDirectory = path.join(__dirname, '..', 'client', 'build');
 
-console.log(`Using build directory: ${buildDirectory}`);
+log(`Using build directory: ${buildDirectory}`);
 
 app.use(express.static(buildDirectory));
 
