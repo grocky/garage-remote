@@ -67,3 +67,5 @@ typings/
 build/
 
 garage-state.json
+
+*.retry
