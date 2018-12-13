@@ -15,6 +15,6 @@ const buildLabel = ({ callingModule }) => {
  * @return {function(message): void}
  */
 module.exports = (module) =>
-  (message) => {
-    console.log(`${buildLabel({ callingModule: module })} - ${message}`);
+  (message, ...context) => {
+    console.log(`${buildLabel({ callingModule: module })} - ${message}`, context);
   };
