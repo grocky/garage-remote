@@ -5,6 +5,7 @@
     git_repo_url: https://github.com/grocky/garage-remote.git
     webserver_name: garage-remote
     controller_name: garage-controller
+    deployment_branch: master
   tasks:
     - name: Set release paths
       set_fact:
@@ -26,7 +27,7 @@
       git:
         repo: "{{ git_repo_url }}"
         dest: "{{ release_path }}"
-        version: mqtt
+        version: "{{ deployment_branch }}"
     - name: Fetch client dependencies
       npm:
         path={{ release_path }}/client
