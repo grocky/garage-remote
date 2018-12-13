@@ -3,13 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "body-parser": "~1.18.2",
+    "body-parser": "1.18.3",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
     "detect-rpi": "1.2.0",
     "express": "~4.15.5",
-    "morgan": "~1.9.0",
-    "onoff": "1.1.9",
+    "morgan": "1.9.1",
+    "mqtt": "2.18.8",
+    "onoff": "3.2.0",
     "pm2": "2.9.3",
     "serve-favicon": "~2.4.5"
   },

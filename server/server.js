@@ -4,6 +4,10 @@ const favicon = require('serve-favicon');
 const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
+const mqttController = require('./middleware/controller.mqtt');
+const StateManager = require('./middleware/garage-state');
+
+const log = require('./logger')(module);
 
 const app = express();
 
@@ -16,9 +20,35 @@ app.use(cookieParser());
 
 const buildDirectory = path.join(__dirname, '..', 'client', 'build');
 
-console.log(`Using build directory: ${buildDirectory}`);
+log(`Using build directory: ${buildDirectory}`);
 
 app.use(express.static(buildDirectory));
+
+const stateManager = new StateManager('garage-state.json');
+
+app.use(StateManager.middleware(stateManager));
+
+const mqttTopicHandlers = {
+  'garage/connected': async (message) => {
+    log(`garage/connected - ${message}`);
+    await stateManager.updateState({ connected: message.toString() === 'true' });
+  },
+  'garage/state': async (message) => {
+    log(`garage state updated to ${message}`);
+    await stateManager.updateState({ status: message.toString() });
+    await stateManager.storeState();
+  }
+};
+
+const mqttClient = mqttController.clientInitializer({
+  host: process.env.MQTT_HOST || 'localhost',
+  clientId: 'controller',
+  topicHandlers: mqttTopicHandlers,
+});
+
+mqttClient.publish('garage/ping', 'true', log);
+
+app.use(mqttController.middleware);
 
 app.use('/garage', require('./routes/garage'));
 
@@ -41,8 +71,6 @@ app.use(function(err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
-  res.render('error');
 });
 
 module.exports = app;
-

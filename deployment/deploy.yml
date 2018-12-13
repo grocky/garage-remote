@@ -3,7 +3,9 @@
   vars:
     project_path: /home/pi/garage-remote
     git_repo_url: https://github.com/grocky/garage-remote.git
-    project_name: garage-remote
+    webserver_name: garage-remote
+    controller_name: garage-controller
+    deployment_branch: master
   tasks:
     - name: Set release paths
       set_fact:
@@ -25,7 +27,7 @@
       git:
         repo: "{{ git_repo_url }}"
         dest: "{{ release_path }}"
-        version: master
+        version: "{{ deployment_branch }}"
     - name: Fetch client dependencies
       npm:
         path={{ release_path }}/client
@@ -41,11 +43,18 @@
         src={{ release_path }}
         dest={{ current_path }}
         state=link
-    - name: Delete old pm2 process
-      command: pm2 delete {{ project_name }}
+    - name: Delete old pm2 webserver process
+      command: pm2 delete {{ webserver_name }}
       ignore_errors: yes
-    - name: Start pm2
-      shell: PORT=80 NODE_ENV=prod pm2 start server/bin/www --name {{ project_name }}
+    - name: Start webserver
+      shell: MQTT_HOST=mac-mini-1.local PORT=80 NODE_ENV=prod pm2 start server/bin/www --name {{ webserver_name }}
+      args:
+        chdir: "{{ current_path }}"
+    - name: Delete old pm2 controller process
+      command: pm2 delete {{ controller_name }}
+      ignore_errors: yes
+    - name: Start garage controller
+      shell: MQTT_HOST=mac-mini-1.local pm2 start server/garage.mqtt.js --name {{ controller_name }}
       args:
         chdir: "{{ current_path }}"
     - name: Delete old dir

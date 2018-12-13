@@ -65,3 +65,7 @@ typings/
 
 # End of https://www.gitignore.io/api/node
 build/
+
+garage-state.json
+
+*.retry
