@@ -12,9 +12,11 @@ const buildLabel = ({ callingModule }) => {
 
 /**
  * @param {object} module - The file's module
- * @return {function(message): void}
+ * @returns {function(message: string, context: any): void}
  */
-module.exports = (module) =>
-  (message, ...context) => {
-    console.log(`${buildLabel({ callingModule: module })} - ${message}`, context);
+const logger = (module) =>
+  (message, context = {}) => {
+    console.log(`${buildLabel({ callingModule: module })} - ${message}`, JSON.stringify(context));
   };
+
+module.exports = logger;

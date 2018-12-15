@@ -17,8 +17,8 @@ const isPi = require('detect-rpi');
 
 let garageButton = {
   readSync: () => log('readSync()'),
-  writeSync: (value) => log(`writeSync() ${value}`),
-  write: (value, cb) => { log(`writeSync() ${value}`); cb(null, value); }
+  writeSync: (value) => log('writeSync()', value),
+  write: (value, cb) => { log('writeSync()', value); cb(null, value); }
 };
 
 if (isPi()) {
@@ -83,7 +83,6 @@ const topicHandlers = {
       state = 'closed';
       sendStateUpdate();
     }, 1000 * 11);
-    log(`close: ${message}`);
   },
   'garage/ping': (message) => {
     log('received PING');
@@ -92,11 +91,30 @@ const topicHandlers = {
   },
 };
 
+const debugEventLogger = (event, mqttClient) =>
+  mqttClient.on(
+    event,
+    (...args) => log('DEBUG: Event emitted', { event, arguments: args })
+  );
+
+const shouldDebugLog = ['1', 'true'].includes(process.env.DEBUG_LOG);
+
+if (shouldDebugLog) {
+  const loggedEvents = ['offline', 'status', 'error', 'message', 'connect'];
+
+  loggedEvents.forEach(e => debugEventLogger(e, client));
+}
+
 client.on('connect', () => {
   Object.keys(topicHandlers).forEach(topic => client.subscribe(topic));
 
   sendConnectionUpdate();
   sendStateUpdate();
+});
+
+client.on('offline', () => {
+  const { protocol, host, keepalive, clientId } = client.options;
+  log('Going offline', { protocol, host, keepalive, clientId });
 });
 
 client.on('message', (topic, message) => {
@@ -112,7 +130,7 @@ const sendConnectionUpdate = () => {
 
 // added to end of garage.js
 const sendStateUpdate = () => {
-  log(`sending state ${state}`);
+  log('sending state', state);
   client.publish('garage/state', state)
 };
 
