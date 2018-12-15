@@ -47,14 +47,22 @@
       command: pm2 delete {{ webserver_name }}
       ignore_errors: yes
     - name: Start webserver
-      shell: MQTT_HOST=mac-mini-1.local MQTT_CLIENT_ID=controller PORT=80 NODE_ENV=prod pm2 start server/bin/www --name {{ webserver_name }}
+      shell: >
+        MQTT_HOST=mac-mini-1.local
+        MQTT_CLIENT_ID=controller
+        PORT=80
+        NODE_ENV=prod
+        pm2 start server/bin/www --name {{ webserver_name }}
       args:
         chdir: "{{ current_path }}"
     - name: Delete old pm2 controller process
       command: pm2 delete {{ controller_name }}
       ignore_errors: yes
     - name: Start garage controller
-      shell: MQTT_HOST=mac-mini-1.local MQTT_CLIENT_ID=garage-door-switch pm2 start server/garage.mqtt.js --name {{ controller_name }}
+      shell: >
+        MQTT_HOST=mac-mini-1.local
+        MQTT_CLIENT_ID=garage-door-switch
+        pm2 start server/garage.mqtt.js --name {{ controller_name }}
       args:
         chdir: "{{ current_path }}"
     - name: Delete old dir
