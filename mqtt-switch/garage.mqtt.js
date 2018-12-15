@@ -1,5 +1,15 @@
 const mqtt = require('mqtt');
+
 const Cleanup = require('./cleanup');
+const log = require('./logger')(module);
+
+let Gpio = { accessible: false };
+
+try {
+  Gpio = require('onoff').Gpio;
+} catch (e) {
+  log('Failed loading onoff');
+}
 
 const {
   MQTT_HOST = 'localhost',
@@ -8,12 +18,10 @@ const {
 
 const client = mqtt.connect(`mqtt://${MQTT_HOST}`, { clientId: MQTT_CLIENT_ID });
 
-const log = require('./logger')(module);
 
 // Always restart the state to closed on reboot for now...
 let state = 'closed';
 
-const isPi = require('detect-rpi');
 
 let garageButton = {
   readSync: () => log('readSync()'),
@@ -21,9 +29,8 @@ let garageButton = {
   write: (value, cb) => { log('writeSync()', value); cb(null, value); }
 };
 
-if (isPi()) {
+if (Gpio.accessible) {
   log('Raspberry Pi detected... using real gpio');
-  const Gpio = require('onoff').Gpio;
   garageButton = new Gpio(4, 'out');
 } else {
   log('Using mock gpio');

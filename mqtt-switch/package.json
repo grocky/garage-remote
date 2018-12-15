@@ -1,0 +1,16 @@
+{
+  "name": "garage-remote-mqtt-switch",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "mqtt": "2.18.8",
+    "onoff": "3.2.2"
+  },
+  "scripts": {
+    "start": "node ./garage.mqtt.js",
+    "start:dev": "nodemon ./garage.mqtt.js"
+  },
+  "devDependencies": {
+    "nodemon": "1.14.11"
+  }
+}
