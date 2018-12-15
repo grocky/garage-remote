@@ -1,9 +1,12 @@
 const mqtt = require('mqtt');
 const Cleanup = require('./cleanup');
 
-const { MQTT_HOST = 'localhost' } = process.env;
+const {
+  MQTT_HOST = 'localhost',
+  MQTT_CLIENT_ID = '',
+} = process.env;
 
-const client = mqtt.connect(`mqtt://${MQTT_HOST}`, { clientId: 'garage-door-switch'});
+const client = mqtt.connect(`mqtt://${MQTT_HOST}`, { clientId: MQTT_CLIENT_ID });
 
 const log = require('./logger')(module);
 
@@ -113,11 +116,10 @@ const sendStateUpdate = () => {
   client.publish('garage/state', state)
 };
 
-Cleanup(() => {
-  return new Promise((res, rej) => {
+Cleanup(() => new Promise((res, rej) => {
     client.publish('garage/connected', 'false');
     log('closing mqtt connection');
     const force = false;
     client.end(force, res);
-  });
-});
+  })
+);
