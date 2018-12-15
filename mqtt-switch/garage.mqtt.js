@@ -3,13 +3,8 @@ const mqtt = require('mqtt');
 const Cleanup = require('./cleanup');
 const log = require('./logger')(module);
 
-let Gpio = { accessible: false };
-
-try {
-  Gpio = require('onoff').Gpio;
-} catch (e) {
-  log('Failed loading onoff');
-}
+const GpioFactory = require('./GpioFactory');
+const Gpio = GpioFactory.create();
 
 const {
   MQTT_HOST = 'localhost',
@@ -18,37 +13,19 @@ const {
 
 const client = mqtt.connect(`mqtt://${MQTT_HOST}`, { clientId: MQTT_CLIENT_ID });
 
-
 // Always restart the state to closed on reboot for now...
 let state = 'closed';
 
-
-let garageButton = {
-  readSync: () => log('readSync()'),
-  writeSync: (value) => log('writeSync()', value),
-  write: (value, cb) => { log('writeSync()', value); cb(null, value); }
-};
-
-if (Gpio.accessible) {
-  log('Raspberry Pi detected... using real gpio');
-  garageButton = new Gpio(4, 'out');
-} else {
-  log('Using mock gpio');
-}
-
-const levels = {
-  HIGH: 1,
-  LOW: 0,
-};
+const garageButton = new Gpio(4, 'out');
 
 // start it high (relay deactivated...)
 log('Starting GPIO pin on hi');
-garageButton.writeSync(levels.HIGH);
+garageButton.writeSync(Gpio.HIGH);
 
 garageButton.depress = () => {
-  garageButton.writeSync(levels.LOW);
+  garageButton.writeSync(Gpio.LOW);
   setTimeout(() => {
-    garageButton.write(levels.HIGH, (err, value) => {
+    garageButton.write(Gpio.HIGH, (err, value) => {
       const message = err ? err.message : `garage button state set to ${value}`;
       log(message);
     });
