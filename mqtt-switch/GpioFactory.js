@@ -28,6 +28,9 @@ MockGPIO.HIGH = 1;
 MockGPIO.LOW = 0;
 
 module.exports = {
+  /**
+   * @returns {Gpio|MockGPIO}
+   */
   create: () => {
     try {
       return require('onoff').Gpio;
