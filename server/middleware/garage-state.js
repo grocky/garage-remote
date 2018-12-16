@@ -7,7 +7,7 @@ class StateManager {
    */
   constructor(filename) {
     this.stateFile = filename;
-    this.state = null;
+    this.state = {};
   }
 
   /**
@@ -36,7 +36,7 @@ class StateManager {
   /**
    * @return {Promise<Object|null>}
    */
-  loadState() {
+  async loadState() {
     if (this.state) {
       return Promise.resolve(this.state);
     }
@@ -44,11 +44,11 @@ class StateManager {
     log('Loading state from file', this.stateFile);
     return new Promise((res, rej) => {
       fs.readFile(this.stateFile, { encoding: 'utf-8' }, (err, data) => {
-        log('loadState readFile', data);
         if (err) {
           log('Failed loading state', err.message);
-          return res(null);
+          return this.storeState();
         }
+        log('loadState readFile', data);
         const state = JSON.parse(data);
         this.state = state;
         res(state);

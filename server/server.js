@@ -42,7 +42,7 @@ const mqttTopicHandlers = {
 
 const mqttClient = mqttController.clientInitializer({
   host: process.env.MQTT_HOST || 'localhost',
-  clientId: 'controller',
+  clientId: process.env.MQTT_CLIENT_ID || '',
   topicHandlers: mqttTopicHandlers,
 });
 

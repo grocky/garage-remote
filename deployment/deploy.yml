@@ -4,9 +4,14 @@
     project_path: /home/pi/garage-remote
     git_repo_url: https://github.com/grocky/garage-remote.git
     webserver_name: garage-remote
-    controller_name: garage-controller
+    switch_name: garage-controller
     deployment_branch: master
   tasks:
+    - name: Install pm2
+      npm:
+        name: pm2
+        global: yes
+        production: yes
     - name: Set release paths
       set_fact:
         release_path: "{{ project_path }}/releases/{{ lookup('pipe','date +%Y%m%d%H%M%S') }}"
@@ -19,10 +24,10 @@
         chdir: "{{ project_path }}"
     - name: Create new folder
       file:
-        dest={{ release_path }}
-        mode=0755
-        recurse=yes
-        state=directory
+        dest: "{{ release_path }}"
+        mode: 0755
+        recurse: yes
+        state: directory
     - name: Clone the repository
       git:
         repo: "{{ git_repo_url }}"
@@ -30,33 +35,49 @@
         version: "{{ deployment_branch }}"
     - name: Fetch client dependencies
       npm:
-        path={{ release_path }}/client
+        path: "{{ release_path }}/client"
+        production: yes
     - name: Build client
       shell: make build
       args:
         chdir: "{{ release_path }}"
     - name: Fetch server dependencies
       npm:
-        path={{ release_path }}/server
+        path: "{{ release_path }}/server"
+        production: yes
+    - name: Fetch switch dependencies
+      npm:
+        path: "{{ release_path }}/mqtt-switch"
+        production: yes
     - name: Update symlink
       file:
-        src={{ release_path }}
-        dest={{ current_path }}
-        state=link
-    - name: Delete old pm2 webserver process
-      command: pm2 delete {{ webserver_name }}
+        src: "{{ release_path }}"
+        dest: "{{ current_path }}"
+        state: link
+    - name: Delete old pm2 processes
+      command: pm2 delete {{ item }}
       ignore_errors: yes
+      loop:
+        - "{{ webserver_name }}"
+        - "{{ switch_name }}"
     - name: Start webserver
-      shell: MQTT_HOST=mac-mini-1.local PORT=80 NODE_ENV=prod pm2 start server/bin/www --name {{ webserver_name }}
+      shell: >
+        MQTT_HOST=mac-mini-1.local
+        MQTT_CLIENT_ID=controller
+        PORT=80
+        NODE_ENV=prod
+        pm2 start server/bin/www --name {{ webserver_name }}
       args:
         chdir: "{{ current_path }}"
-    - name: Delete old pm2 controller process
-      command: pm2 delete {{ controller_name }}
-      ignore_errors: yes
     - name: Start garage controller
-      shell: MQTT_HOST=mac-mini-1.local pm2 start server/garage.mqtt.js --name {{ controller_name }}
+      shell: >
+        MQTT_HOST=mac-mini-1.local
+        MQTT_CLIENT_ID=garage-door-switch
+        pm2 start mqtt-switch/garage.mqtt.js --name {{ switch_name }}
       args:
         chdir: "{{ current_path }}"
+    - name: Save the pm2 process list
+      shell: pm2 save
     - name: Delete old dir
       shell: rm -rf {{ current_release_path.stdout }}/
       when: current_release_path.stdout != current_path
