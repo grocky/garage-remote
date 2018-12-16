@@ -1,3 +1,5 @@
+const log = (msg) => console.log(`CLEANUP: ${msg}`);
+
 /**
  * @param {function(): Promise} customCleanup
  * @constructor
@@ -8,27 +10,27 @@ const Cleanup = (customCleanup) => {
       await customCleanup();
       process.exit();
     } catch (e) {
-      console.log(e.stack);
+      log(e.message);
       process.exit(3);
     }
   });
 
-  process.on('exit', () => console.log('Done.'));
+  process.on('exit', () => log('Done.'));
 
 // catching signals and do something before exit
   ['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT',
     'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'
   ].forEach((sig) => {
     process.on(sig, () => {
-      console.log(`signal: ${sig}`);
+      log(`signal: ${sig}`);
       process.emit('cleanup');
     });
   });
 
 //catch uncaught exceptions, trace, then exit normally
   process.on('uncaughtException', (e) => {
-    console.log('Uncaught Exception...');
-    console.log(e.stack);
+    log('Uncaught Exception...');
+    log(e.stack);
     process.exit(99);
   });
 };
