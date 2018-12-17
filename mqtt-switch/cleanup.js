@@ -19,7 +19,7 @@ const Cleanup = (customCleanup) => {
 
 // catching signals and do something before exit
   ['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT',
-    'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'
+    'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGTERM'
   ].forEach((sig) => {
     process.on(sig, () => {
       log(`signal: ${sig}`);

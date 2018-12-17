@@ -5,28 +5,34 @@ const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const mqttController = require('./middleware/controller.mqtt');
-const StateManager = require('./middleware/garage-state');
+const StateManager = require('./StateManager');
 
 const log = require('./logger')(module);
 
+const io = require('socket.io')();
 const app = express();
+app.io = io;
 
-// uncomment after placing your favicon in /public
-app.use(favicon(path.join(__dirname, '..', 'client', 'public', 'favicon.ico')));
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 const buildDirectory = path.join(__dirname, '..', 'client', 'build');
-
 log(`Using build directory: ${buildDirectory}`);
-
+app.use(favicon(path.join(buildDirectory, 'favicon.ico')));
 app.use(express.static(buildDirectory));
 
 const stateManager = new StateManager('garage-state.json');
+app.use(stateManager.createMiddleware());
 
-app.use(StateManager.middleware(stateManager));
+io.on('connection', socket => {
+  console.log('A client connected');
+  const { status = 'Unknown' } = stateManager.state;
+  socket.emit('garage/state', status);
+
+  socket.on('disconnect', () => console.log('A client disconnected'))
+});
 
 const mqttTopicHandlers = {
   'garage/connected': async (message) => {
@@ -37,6 +43,7 @@ const mqttTopicHandlers = {
     log(`garage state updated to ${message}`);
     await stateManager.updateState({ status: message.toString() });
     await stateManager.storeState();
+    io.sockets.emit('garage/state', message.toString());
   }
 };
 

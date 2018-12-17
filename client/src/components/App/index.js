@@ -1,5 +1,8 @@
 import React, { Component } from 'react';
+import socketIOClient from 'socket.io-client'
+
 import logo from './logo-red.svg';
+import Icon from '../Icon';
 
 import './style.css';
 
@@ -11,32 +14,40 @@ class App extends Component {
       status: '',
       inFlight: false,
       clicks: 0
-    }
+    };
     this.toggleGarageButton = this.toggleGarageButton.bind(this)
   }
 
-  toggleGarageButton() {
+  componentDidMount() {
+    const socket = socketIOClient();
+    socket.on('garage/state', data => this.setState({ status: data }));
+  }
+
+  toggleGarageButton = () => {
     this.setState(prev => Object.assign(prev, {
       inFlight: true,
       clicks: ++prev.clicks
     }));
 
-    fetch('/garage')
-      .then(res => res.json())
-      .then(body => body.data)
-      .then(data =>
-          this.setState(prev => Object.assign(prev, {
-              inFlight: false,
-              status: data.message
-          }))
-      );
-  }
+    return fetch('/garage')
+  };
 
   render() {
 
-    const status = this.state.clicks 
-      ? (<div>{this.state.status}</div>)
-      : '';
+    const { status } = this.state;
+    const garageIcon = status === 'closed' || status === 'opening'
+      ? 'garage-closed'
+      : 'garage-open';
+
+    const inProgress = status === 'closing' || status === 'opening';
+
+    const garageStateRepresentation = !status
+      ? 'Loading...'
+      : (
+        <button className='btn btn-block' onClick={this.toggleGarageButton} disabled={inProgress}>
+          <Icon name={garageIcon} />
+        </button>
+      );
 
     return (
       <div className="App">
@@ -47,11 +58,17 @@ class App extends Component {
         <div className="container">
           <div className="row">
             <div className="col-md-4 offset-md-4">
-                <button className='btn btn-block' onClick={this.toggleGarageButton}>Click Me</button>
+              { garageStateRepresentation }
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-md-4 offset-md-4">
+              <section>
+                Garage is currently { status }.
+              </section>
             </div>
           </div>
         </div>
-        {status}
       </div>
     );
   }

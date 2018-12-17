@@ -18,7 +18,12 @@
 .App button {
   background-color: #212121;
   color: #fff;
-  height: 4em;
+  padding: 5% 0;
+}
+
+.App button svg {
+  height: 7em;
+  fill: #f7f7f7;
 }
 
 .App-title {

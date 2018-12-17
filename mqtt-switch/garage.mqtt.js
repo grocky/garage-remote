@@ -15,10 +15,7 @@ garageButton.writeSync(Gpio.HIGH);
 garageButton.depress = () => {
   garageButton.writeSync(Gpio.LOW);
   setTimeout(() => {
-    garageButton.write(Gpio.HIGH, (err, value) => {
-      const message = err ? err.message : `garage button state set to ${value}`;
-      log(message);
-    });
+    garageButton.writeSync(Gpio.HIGH);
   }, 500);
 };
 
