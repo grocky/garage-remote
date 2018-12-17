@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
-import logo from './logo-red.svg';
 import socketIOClient from 'socket.io-client'
+
+import logo from './logo-red.svg';
+import Icon from '../Icon';
 
 import './style.css';
 
@@ -32,6 +34,11 @@ class App extends Component {
 
   render() {
 
+    const { status } = this.state;
+    const garageIcon = status === 'closed' || status === 'opening'
+      ? 'garage-closed'
+      : 'garage-open';
+
     return (
       <div className="App">
         <header className="App-header">
@@ -41,13 +48,19 @@ class App extends Component {
         <div className="container">
           <div className="row">
             <div className="col-md-4 offset-md-4">
-                <button className='btn btn-block' onClick={this.toggleGarageButton}>Click Me</button>
+              <a className='btn btn-block' onClick={this.toggleGarageButton}>
+                <Icon name={garageIcon} />
+              </a>
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-md-4 offset-md-4">
+              <section>
+                Garage is currently { status }.
+              </section>
             </div>
           </div>
         </div>
-        <section>
-          Current status: {this.state.status}
-        </section>
       </div>
     );
   }
