@@ -18,11 +18,11 @@
 .App button {
   background-color: #212121;
   color: #fff;
-  padding: 10% 0;
+  padding: 5% 0;
 }
 
 .App button svg {
-  height: 80%;
+  height: 7em;
   fill: #f7f7f7;
 }
 
