@@ -11,26 +11,18 @@ class App extends Component {
       status: '',
       inFlight: false,
       clicks: 0
-    }
+    };
     this.toggleGarageButton = this.toggleGarageButton.bind(this)
   }
 
-  toggleGarageButton() {
+  toggleGarageButton = () => {
     this.setState(prev => Object.assign(prev, {
       inFlight: true,
       clicks: ++prev.clicks
     }));
 
-    fetch('/garage')
-      .then(res => res.json())
-      .then(body => body.data)
-      .then(data =>
-          this.setState(prev => Object.assign(prev, {
-              inFlight: false,
-              status: data.message
-          }))
-      );
-  }
+    return fetch('/garage')
+  };
 
   render() {
 

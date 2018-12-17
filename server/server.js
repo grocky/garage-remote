@@ -6,25 +6,31 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const mqttController = require('./middleware/controller.mqtt');
 const StateManager = require('./middleware/garage-state');
+const io = require('socket.io')();
 
 const log = require('./logger')(module);
 
 const app = express();
 
-// uncomment after placing your favicon in /public
-app.use(favicon(path.join(__dirname, '..', 'client', 'public', 'favicon.ico')));
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 const buildDirectory = path.join(__dirname, '..', 'client', 'build');
-
 log(`Using build directory: ${buildDirectory}`);
-
+app.use(favicon(path.join(buildDirectory, 'favicon.ico')));
 app.use(express.static(buildDirectory));
 
 const stateManager = new StateManager('garage-state.json');
+
+io.on('connection', (client) => {
+
+});
+
+const port = 8001;
+io.listen(port);
+console.log('socket IO listening on port... ', port);
 
 app.use(StateManager.middleware(stateManager));
 

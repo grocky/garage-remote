@@ -2,7 +2,7 @@
   "name": "garage-remote-client",
   "version": "1.0.1",
   "private": true,
-  "proxy": "http://localhost:3001",
+  "proxy": "http://localhost:3000",
   "dependencies": {
     "bootstrap": "4.0.0",
     "react": "^16.2.0",
@@ -10,7 +10,7 @@
     "react-scripts": "1.1.0"
   },
   "scripts": {
-    "start:dev": "react-scripts start",
+    "start:dev": "PORT=3001 react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
