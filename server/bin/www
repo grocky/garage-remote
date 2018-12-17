@@ -8,18 +8,15 @@ const app = require('../server');
 const debug = require('debug')('server:api');
 const http = require('http');
 
-/**
- * Get port from environment and store in Express.
- */
-
 const port = normalizePort(process.env.PORT || 3001);
 app.set('port', port);
 
 /**
  * Create HTTP server.
  */
-
 const server = http.createServer(app);
+
+app.io.attach(server);
 
 /**
  * Listen on provided port, on all network interfaces.

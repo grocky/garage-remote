@@ -5,12 +5,13 @@ const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const mqttController = require('./middleware/controller.mqtt');
-const StateManager = require('./middleware/garage-state');
-const io = require('socket.io')();
+const StateManager = require('./StateManager');
 
 const log = require('./logger')(module);
 
+const io = require('socket.io')();
 const app = express();
+app.io = io;
 
 app.use(logger('dev'));
 app.use(bodyParser.json());
@@ -23,16 +24,15 @@ app.use(favicon(path.join(buildDirectory, 'favicon.ico')));
 app.use(express.static(buildDirectory));
 
 const stateManager = new StateManager('garage-state.json');
+app.use(stateManager.createMiddleware());
 
-io.on('connection', (client) => {
+io.on('connection', socket => {
+  console.log('A client connected');
+  const { status = 'Unknown' } = stateManager.state;
+  socket.emit('garage/state', status);
 
+  socket.on('disconnect', () => console.log('A client disconnected'))
 });
-
-const port = 8001;
-io.listen(port);
-console.log('socket IO listening on port... ', port);
-
-app.use(StateManager.middleware(stateManager));
 
 const mqttTopicHandlers = {
   'garage/connected': async (message) => {
@@ -43,6 +43,7 @@ const mqttTopicHandlers = {
     log(`garage state updated to ${message}`);
     await stateManager.updateState({ status: message.toString() });
     await stateManager.storeState();
+    io.sockets.emit('garage/state', message.toString());
   }
 };
 

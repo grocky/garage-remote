@@ -1,5 +1,5 @@
 const fs = require('fs');
-const log = require('../logger')(module);
+const log = require('./logger')(module);
 
 class StateManager {
   /**
@@ -54,6 +54,10 @@ class StateManager {
         res(state);
       })
     });
+  }
+
+  createMiddleware() {
+    return StateManager.middleware(this);
   }
 }
 

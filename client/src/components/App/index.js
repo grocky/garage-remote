@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import logo from './logo-red.svg';
+import socketIOClient from 'socket.io-client'
 
 import './style.css';
 
@@ -15,6 +16,11 @@ class App extends Component {
     this.toggleGarageButton = this.toggleGarageButton.bind(this)
   }
 
+  componentDidMount() {
+    const socket = socketIOClient();
+    socket.on('garage/state', data => this.setState({ status: data }));
+  }
+
   toggleGarageButton = () => {
     this.setState(prev => Object.assign(prev, {
       inFlight: true,
@@ -25,10 +31,6 @@ class App extends Component {
   };
 
   render() {
-
-    const status = this.state.clicks 
-      ? (<div>{this.state.status}</div>)
-      : '';
 
     return (
       <div className="App">
@@ -43,7 +45,9 @@ class App extends Component {
             </div>
           </div>
         </div>
-        {status}
+        <section>
+          Current status: {this.state.status}
+        </section>
       </div>
     );
   }
