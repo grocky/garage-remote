@@ -39,6 +39,16 @@ class App extends Component {
       ? 'garage-closed'
       : 'garage-open';
 
+    const inProgress = status === 'closing' || status === 'opening';
+
+    const garageStateRepresentation = !status
+      ? 'Loading...'
+      : (
+        <button className='btn btn-block' onClick={this.toggleGarageButton} disabled={inProgress}>
+          <Icon name={garageIcon} />
+        </button>
+      );
+
     return (
       <div className="App">
         <header className="App-header">
@@ -48,9 +58,7 @@ class App extends Component {
         <div className="container">
           <div className="row">
             <div className="col-md-4 offset-md-4">
-              <a className='btn btn-block' onClick={this.toggleGarageButton}>
-                <Icon name={garageIcon} />
-              </a>
+              { garageStateRepresentation }
             </div>
           </div>
           <div className="row">

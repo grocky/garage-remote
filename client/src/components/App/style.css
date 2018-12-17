@@ -18,7 +18,12 @@
 .App button {
   background-color: #212121;
   color: #fff;
-  height: 4em;
+  padding: 10% 0;
+}
+
+.App button svg {
+  height: 80%;
+  fill: #f7f7f7;
 }
 
 .App-title {
@@ -32,8 +37,4 @@
 @keyframes App-logo-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
-}
-
-.btn-block {
-  padding: 10% 0;
 }
