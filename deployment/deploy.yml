@@ -38,7 +38,7 @@
         path: "{{ release_path }}/client"
         production: yes
     - name: Build client
-      shell: make build
+      shell: make build-client
       args:
         chdir: "{{ release_path }}"
     - name: Fetch server dependencies
