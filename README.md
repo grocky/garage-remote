@@ -2,18 +2,7 @@
 
 A nodejs server to open my garage from my couch.
 
-[setup](./raspberry-pi-setup.md)
+![connection diagram](./docs/wiring-diagram.png)
 
-Static ip: http://192.168.1.10
-
-## application setup
-
-1. clone the repo onto the pi (todo: make deployment config)
-2. install pm2: `sudo npm i -g pm2`
-3. `sudo setcap 'cap_net_bind_service=+ep' $(which node)`
-4. add pm2 startup config
-    ```
-    sudo env PATH=$PATH:/usr/local/bin pm2 startup systemd -u pi --hp /home/pi
-    ```
-5. `cd garage-remote && npm run build`
-6. `cd server && npm install && pm2 start ecosystem.config.js`
+Garage relay is connected to GPIO4.
+Magnetic switch sensor is connected to GPIO18.

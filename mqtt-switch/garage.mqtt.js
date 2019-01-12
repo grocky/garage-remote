@@ -7,6 +7,7 @@ const GpioFactory = require('./GpioFactory');
 const Gpio = GpioFactory.create();
 
 const garageButton = new Gpio(4, 'high');
+const magneticSensor = new Gpio(18, 'in', 'both');
 
 garageButton.depress = () => {
   garageButton.writeSync(Gpio.LOW);
@@ -22,7 +23,27 @@ const {
 
 const mqttClient = mqtt.connect(`mqtt://${MQTT_HOST}`, { clientId: MQTT_CLIENT_ID });
 
-let state = 'closed';
+const doorValue = magneticSensor.readSync();
+log('Initial magnetic sensor state', { doorValue });
+
+const determineDoorPosition = (pinValue) => pinValue === Gpio.HIGH ? 'closed' : 'open';
+
+let state = determineDoorPosition(doorValue);
+
+magneticSensor.watch((err, edge) => {
+  if (err) {
+    log(err.message);
+    throw err;
+  }
+
+  log('Magnetic switch changed', { edge });
+
+  magneticSensor.read((err, value) => {
+    log('magnetic switch value', { value });
+    state = determineDoorPosition(value);
+    sendStateUpdate();
+  });
+});
 
 const topicHandlers = {
   'garage/open': (message) => {
@@ -35,13 +56,6 @@ const topicHandlers = {
     sendStateUpdate();
 
     garageButton.depress();
-
-    // simulate door open after 5 seconds (would be listening to hardware)
-    setTimeout(() => {
-      log('garage door finished opening');
-      state = 'open';
-      sendStateUpdate();
-    }, 1000 * 11)
   },
   'garage/close': (message) => {
     if (state === 'closed' || state === 'closing') {
@@ -53,12 +67,6 @@ const topicHandlers = {
     sendStateUpdate();
 
     garageButton.depress();
-
-    setTimeout(() => {
-      log('garage door finished closing');
-      state = 'closed';
-      sendStateUpdate();
-    }, 1000 * 11);
   },
   'garage/ping': (message) => {
     log('received PING');
