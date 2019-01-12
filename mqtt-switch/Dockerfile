@@ -9,8 +9,8 @@ RUN apk update && apk add --no-cache --virtual \
   make \
   g++
 
-COPY mqtt-switch/package.json .
-COPY mqtt-switch/package-lock.json .
+COPY package.json .
+COPY package-lock.json .
 
 RUN npm config set registry https://registry.npmjs.org \
  && npm install \
@@ -24,6 +24,6 @@ WORKDIR /app
 
 COPY --from=builder node_modules .
 
-COPY mqtt-switch/ .
+COPY . .
 
 CMD ["node", "garage.mqtt.js"]

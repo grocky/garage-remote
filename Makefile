@@ -1,7 +1,13 @@
-
 build:
+	docker-compose build
+
+start:
+	docker-compose up -d
+
+build-client:
 	cd client && npm run build
-start: build
+
+start-local: build-client
 	cd server && bin/www
 
 deployment_branch = master
