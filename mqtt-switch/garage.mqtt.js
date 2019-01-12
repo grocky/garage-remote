@@ -6,11 +6,7 @@ const log = require('./logger')(module);
 const GpioFactory = require('./GpioFactory');
 const Gpio = GpioFactory.create();
 
-const garageButton = new Gpio(4, 'out');
-
-// start it high (relay deactivated...)
-log('Starting GPIO pin on hi');
-garageButton.writeSync(Gpio.HIGH);
+const garageButton = new Gpio(4, 'high');
 
 garageButton.depress = () => {
   garageButton.writeSync(Gpio.LOW);
@@ -24,9 +20,7 @@ const {
   MQTT_CLIENT_ID = '',
 } = process.env;
 
-const client = mqtt.connect(`mqtt://${MQTT_HOST}`, { clientId: MQTT_CLIENT_ID });
 
-// Always restart the state to closed on reboot for now...
 let state = 'closed';
 
 const topicHandlers = {
