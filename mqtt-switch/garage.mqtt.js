@@ -20,6 +20,7 @@ const {
   MQTT_CLIENT_ID = '',
 } = process.env;
 
+const mqttClient = mqtt.connect(`mqtt://${MQTT_HOST}`, { clientId: MQTT_CLIENT_ID });
 
 let state = 'closed';
 
@@ -77,22 +78,22 @@ const shouldDebugLog = ['1', 'true'].includes(process.env.DEBUG_LOG);
 if (shouldDebugLog) {
   const loggedEvents = ['offline', 'status', 'error', 'message', 'connect'];
 
-  loggedEvents.forEach(e => debugEventLogger(e, client));
+  loggedEvents.forEach(e => debugEventLogger(e, mqttClient));
 }
 
-client.on('connect', () => {
-  Object.keys(topicHandlers).forEach(topic => client.subscribe(topic));
+mqttClient.on('connect', () => {
+  Object.keys(topicHandlers).forEach(topic => mqttClient.subscribe(topic));
 
   sendConnectionUpdate();
   sendStateUpdate();
 });
 
-client.on('offline', () => {
-  const { protocol, host, keepalive, clientId } = client.options;
+mqttClient.on('offline', () => {
+  const { protocol, host, keepalive, clientId } = mqttClient.options;
   log('Going offline', { protocol, host, keepalive, clientId });
 });
 
-client.on('message', (topic, message) => {
+mqttClient.on('message', (topic, message) => {
   const noOp = () => {};
   const handler = topicHandlers[topic] || noOp;
 
@@ -100,19 +101,19 @@ client.on('message', (topic, message) => {
 });
 
 const sendConnectionUpdate = () => {
-  client.publish('garage/connected', 'true');
+  mqttClient.publish('garage/connected', 'true');
 };
 
 // added to end of garage.js
 const sendStateUpdate = () => {
   log('sending state', state);
-  client.publish('garage/state', state)
+  mqttClient.publish('garage/state', state)
 };
 
 Cleanup(() => new Promise((res, rej) => {
-    client.publish('garage/connected', 'false');
+    mqttClient.publish('garage/connected', 'false');
     log('closing mqtt connection');
     const force = false;
-    client.end(force, res);
+    mqttClient.end(force, res);
   })
 );
