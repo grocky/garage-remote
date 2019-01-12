@@ -32,8 +32,8 @@ services:
   switch:
     container_name: garage-switch
     build:
-      context: .
-      dockerfile: ./mqtt-switch/Dockerfile
+      context: ./mqtt-switch
+      dockerfile: ./Dockerfile
       args:
         - NODE_ENV=development
     command: npx nodemon garage.mqtt.js
