@@ -6,11 +6,8 @@ const log = require('./logger')(module);
 const GpioFactory = require('./GpioFactory');
 const Gpio = GpioFactory.create();
 
-const garageButton = new Gpio(4, 'out');
-
-// start it high (relay deactivated...)
-log('Starting GPIO pin on hi');
-garageButton.writeSync(Gpio.HIGH);
+const garageButton = new Gpio(4, 'high');
+const magneticSensor = new Gpio(18, 'in', 'both');
 
 garageButton.depress = () => {
   garageButton.writeSync(Gpio.LOW);
@@ -24,10 +21,29 @@ const {
   MQTT_CLIENT_ID = '',
 } = process.env;
 
-const client = mqtt.connect(`mqtt://${MQTT_HOST}`, { clientId: MQTT_CLIENT_ID });
+const mqttClient = mqtt.connect(`mqtt://${MQTT_HOST}`, { clientId: MQTT_CLIENT_ID });
 
-// Always restart the state to closed on reboot for now...
-let state = 'closed';
+const doorValue = magneticSensor.readSync();
+log('Initial magnetic sensor state', { doorValue });
+
+const determineDoorPosition = (pinValue) => pinValue === Gpio.HIGH ? 'closed' : 'open';
+
+let state = determineDoorPosition(doorValue);
+
+magneticSensor.watch((err, edge) => {
+  if (err) {
+    log(err.message);
+    throw err;
+  }
+
+  log('Magnetic switch changed', { edge });
+
+  magneticSensor.read((err, value) => {
+    log('magnetic switch value', { value });
+    state = determineDoorPosition(value);
+    sendStateUpdate();
+  });
+});
 
 const topicHandlers = {
   'garage/open': (message) => {
@@ -40,13 +56,6 @@ const topicHandlers = {
     sendStateUpdate();
 
     garageButton.depress();
-
-    // simulate door open after 5 seconds (would be listening to hardware)
-    setTimeout(() => {
-      log('garage door finished opening');
-      state = 'open';
-      sendStateUpdate();
-    }, 1000 * 11)
   },
   'garage/close': (message) => {
     if (state === 'closed' || state === 'closing') {
@@ -58,12 +67,6 @@ const topicHandlers = {
     sendStateUpdate();
 
     garageButton.depress();
-
-    setTimeout(() => {
-      log('garage door finished closing');
-      state = 'closed';
-      sendStateUpdate();
-    }, 1000 * 11);
   },
   'garage/ping': (message) => {
     log('received PING');
@@ -83,22 +86,22 @@ const shouldDebugLog = ['1', 'true'].includes(process.env.DEBUG_LOG);
 if (shouldDebugLog) {
   const loggedEvents = ['offline', 'status', 'error', 'message', 'connect'];
 
-  loggedEvents.forEach(e => debugEventLogger(e, client));
+  loggedEvents.forEach(e => debugEventLogger(e, mqttClient));
 }
 
-client.on('connect', () => {
-  Object.keys(topicHandlers).forEach(topic => client.subscribe(topic));
+mqttClient.on('connect', () => {
+  Object.keys(topicHandlers).forEach(topic => mqttClient.subscribe(topic));
 
   sendConnectionUpdate();
   sendStateUpdate();
 });
 
-client.on('offline', () => {
-  const { protocol, host, keepalive, clientId } = client.options;
+mqttClient.on('offline', () => {
+  const { protocol, host, keepalive, clientId } = mqttClient.options;
   log('Going offline', { protocol, host, keepalive, clientId });
 });
 
-client.on('message', (topic, message) => {
+mqttClient.on('message', (topic, message) => {
   const noOp = () => {};
   const handler = topicHandlers[topic] || noOp;
 
@@ -106,19 +109,19 @@ client.on('message', (topic, message) => {
 });
 
 const sendConnectionUpdate = () => {
-  client.publish('garage/connected', 'true');
+  mqttClient.publish('garage/connected', 'true');
 };
 
 // added to end of garage.js
 const sendStateUpdate = () => {
   log('sending state', state);
-  client.publish('garage/state', state)
+  mqttClient.publish('garage/state', state)
 };
 
 Cleanup(() => new Promise((res, rej) => {
-    client.publish('garage/connected', 'false');
+    mqttClient.publish('garage/connected', 'false');
     log('closing mqtt connection');
     const force = false;
-    client.end(force, res);
+    mqttClient.end(force, res);
   })
 );

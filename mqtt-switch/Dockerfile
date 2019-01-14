@@ -14,8 +14,7 @@ COPY package-lock.json .
 
 RUN npm config set registry https://registry.npmjs.org \
  && npm install \
- && npm ls || true \
- && npm cache clean --force
+ && npm ls || true
 
 FROM node:8.9-alpine as app
 

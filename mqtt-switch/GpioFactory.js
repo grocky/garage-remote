@@ -1,7 +1,15 @@
 class MockGPIO {
   constructor(pin, direction) {
-    this._value = 0;
-    this._direction = direction;
+    if (direction === 'high') {
+      this._value = 1;
+      this.direction = 'out';
+    } else if (direction === 'low') {
+      this._value = 0;
+      this.direction = 'out';
+    } else {
+      this._direction = direction;
+      this._value = 0;
+    }
   }
 
   readSync() { return this._value; }
