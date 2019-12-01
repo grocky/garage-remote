@@ -30,6 +30,13 @@ const determineDoorPosition = (pinValue) => pinValue === Gpio.HIGH ? 'closed' : 
 
 let state = determineDoorPosition(doorValue);
 
+const nextStates = {
+  'closed': 'opening',
+  'opening': 'open',
+  'open': 'closing',
+  'closing': 'closed',
+};
+
 magneticSensor.watch((err, edge) => {
   if (err) {
     log(err.message);
@@ -46,8 +53,20 @@ magneticSensor.watch((err, edge) => {
 });
 
 const topicHandlers = {
+  'garage/press': (message) => {
+    if (['opening', 'closing'].includes(state)) {
+      return sendStateUpdate();
+    }
+
+    log('Received command', { message });
+
+    state = nextStates[state];
+
+    sendStateUpdate();
+    garageButton.depress();
+  },
   'garage/open': (message) => {
-    if (state === 'open' || state === 'opening') {
+    if (['open', 'opening'].includes(state)) {
       return sendStateUpdate();
     }
 
@@ -58,7 +77,7 @@ const topicHandlers = {
     garageButton.depress();
   },
   'garage/close': (message) => {
-    if (state === 'closed' || state === 'closing') {
+    if (['closed', 'closing'].includes(state)) {
       return sendStateUpdate();
     }
 
