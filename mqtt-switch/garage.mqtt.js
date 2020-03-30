@@ -9,6 +9,10 @@ const Gpio = GpioFactory.create();
 const garageButton = new Gpio(4, 'high');
 const magneticSensor = new Gpio(18, 'in', 'both');
 
+const MQTT_AVAILABILITY_TOPIC = 'garage/connected';
+const MQTT_GARAGE_STATE_TOPIC = 'garage/state';
+const MQTT_COMMAND_TOPIC = 'garage/press';
+
 garageButton.depress = () => {
   garageButton.writeSync(Gpio.LOW);
   setTimeout(() => {
@@ -21,7 +25,14 @@ const {
   MQTT_CLIENT_ID = '',
 } = process.env;
 
-const mqttClient = mqtt.connect(`mqtt://${MQTT_HOST}`, { clientId: MQTT_CLIENT_ID });
+const will = {
+  topic: MQTT_AVAILABILITY_TOPIC,
+  payload: 'offline',
+  qos: 0,
+  retain: true,
+};
+
+const mqttClient = mqtt.connect(`mqtt://${MQTT_HOST}`, { clientId: MQTT_CLIENT_ID, will });
 
 const doorValue = magneticSensor.readSync();
 log('Initial magnetic sensor state', { doorValue });
@@ -53,7 +64,7 @@ magneticSensor.watch((err, edge) => {
 });
 
 const topicHandlers = {
-  'garage/press': (message) => {
+  [MQTT_COMMAND_TOPIC]: (message) => {
     if (['opening', 'closing'].includes(state)) {
       return sendStateUpdate();
     }
@@ -128,19 +139,18 @@ mqttClient.on('message', (topic, message) => {
 });
 
 const sendConnectionUpdate = () => {
-  mqttClient.publish('garage/connected', 'true');
+  mqttClient.publish(MQTT_AVAILABILITY_TOPIC, 'online', { qos: 0, retain: true });
 };
 
 // added to end of garage.js
 const sendStateUpdate = () => {
   log('sending state', state);
-  mqttClient.publish('garage/state', state)
+  mqttClient.publish(MQTT_GARAGE_STATE_TOPIC, state)
 };
 
 Cleanup(() => new Promise((res, rej) => {
-    mqttClient.publish('garage/connected', 'false');
-    log('closing mqtt connection');
-    const force = false;
-    mqttClient.end(force, res);
-  })
-);
+  mqttClient.publish(MQTT_AVAILABILITY_TOPIC, 'offline', { qos: 0, retain: true });
+  log('closing mqtt connection');
+  const force = false;
+  mqttClient.end(force, res);
+}));
