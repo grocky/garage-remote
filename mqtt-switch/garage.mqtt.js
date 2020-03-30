@@ -37,15 +37,22 @@ const mqttClient = mqtt.connect(`mqtt://${MQTT_HOST}`, { clientId: MQTT_CLIENT_I
 const doorValue = magneticSensor.readSync();
 log('Initial magnetic sensor state', { doorValue });
 
-const determineDoorPosition = (pinValue) => pinValue === Gpio.HIGH ? 'closed' : 'open';
+const STATES = {
+  OPEN: 'open',
+  OPENING: 'opening',
+  CLOSED: 'closed',
+  CLOSING: 'closing',
+};
+
+const determineDoorPosition = (pinValue) => pinValue === Gpio.HIGH ? STATES.CLOSED : STATES.OPEN;
 
 let state = determineDoorPosition(doorValue);
 
 const nextStates = {
-  'closed': 'opening',
-  'opening': 'open',
-  'open': 'closing',
-  'closing': 'closed',
+  [STATES.CLOSED]: STATES.OPENING,
+  [STATES.OPENING]: STATES.OPEN,
+  [STATES.OPEN]: STATES.CLOSING,
+  [STATES.CLOSING]: STATES.CLOSED,
 };
 
 magneticSensor.watch((err, edge) => {
@@ -65,11 +72,18 @@ magneticSensor.watch((err, edge) => {
 
 const topicHandlers = {
   [MQTT_COMMAND_TOPIC]: (message) => {
-    if (['opening', 'closing'].includes(state)) {
+    if ([STATES.OPENING, STATES.CLOSING].includes(state)) {
       return sendStateUpdate();
     }
 
-    log('Received command', { message });
+    const command = message.toString();
+
+    log('Received command', { command });
+
+    if (command.toLowerCase() === 'close' && state === STATES.CLOSED
+      || command.toLowerCase() === 'open' && state === STATES.OPEN) {
+      return sendStateUpdate();
+    }
 
     state = nextStates[state];
 
@@ -77,23 +91,23 @@ const topicHandlers = {
     garageButton.depress();
   },
   'garage/open': (message) => {
-    if (['open', 'opening'].includes(state)) {
+    if ([STATES.OPEN, STATES.OPENING].includes(state)) {
       return sendStateUpdate();
     }
 
     log('opening garage door');
-    state = 'opening';
+    state = STATES.OPENING;
     sendStateUpdate();
 
     garageButton.depress();
   },
   'garage/close': (message) => {
-    if (['closed', 'closing'].includes(state)) {
+    if ([STATES.CLOSED, STATES.CLOSING].includes(state)) {
       return sendStateUpdate();
     }
 
     log('closing garage door');
-    state = 'closing';
+    state = STATES.CLOSING;
     sendStateUpdate();
 
     garageButton.depress();
