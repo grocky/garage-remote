@@ -62,7 +62,7 @@
         - "{{ switch_name }}"
     - name: Start webserver
       shell: >
-        MQTT_HOST=mac-mini-1.local
+        MQTT_HOST=alpha.local
         MQTT_CLIENT_ID=controller
         PORT=80
         NODE_ENV=prod
@@ -71,7 +71,7 @@
         chdir: "{{ current_path }}"
     - name: Start garage controller
       shell: >
-        MQTT_HOST=mac-mini-1.local
+        MQTT_HOST=alpha.local
         MQTT_CLIENT_ID=garage-door-switch
         pm2 start mqtt-switch/garage.mqtt.js --name {{ switch_name }}
       args:
