@@ -66,14 +66,14 @@
         MQTT_CLIENT_ID=controller
         PORT=80
         NODE_ENV=prod
-        pm2 start server/bin/www --name {{ webserver_name }}
+        sudo pm2 start server/bin/www --name {{ webserver_name }}
       args:
         chdir: "{{ current_path }}"
     - name: Start garage controller
       shell: >
         MQTT_HOST=alpha.local
         MQTT_CLIENT_ID=garage-door-switch
-        pm2 start mqtt-switch/garage.mqtt.js --name {{ switch_name }}
+        sudo pm2 start mqtt-switch/garage.mqtt.js --name {{ switch_name }}
       args:
         chdir: "{{ current_path }}"
     - name: Save the pm2 process list
