@@ -6,16 +6,14 @@
     webserver_name: garage-remote
     switch_name: garage-controller
     deployment_branch: main
+    release_path: "{{ project_path }}/releases/{{ lookup('pipe','date +%Y%m%d%H%M%S') }}"
+    current_path: "{{ project_path }}/current"
   tasks:
     - name: Install pm2
       npm:
         name: pm2
         global: yes
         production: yes
-    - name: Set release paths
-      set_fact:
-        release_path: "{{ project_path }}/releases/{{ lookup('pipe','date +%Y%m%d%H%M%S') }}"
-        current_path: "{{ project_path }}/current"
     - name: Retrieve current release folder
       command: readlink -f current
       register: current_release_path
@@ -55,29 +53,28 @@
         dest: "{{ current_path }}"
         state: link
     - name: Delete old pm2 processes
-      command: pm2 delete {{ item }}
+      command: sudo pm2 delete {{ item }}
       ignore_errors: yes
       loop:
         - "{{ webserver_name }}"
         - "{{ switch_name }}"
+      tags: pm2
     - name: Start webserver
       shell: >
-        MQTT_HOST=alpha.local
-        MQTT_CLIENT_ID=controller
-        PORT=80
-        NODE_ENV=prod
-        sudo pm2 start server/bin/www --name {{ webserver_name }}
+        sudo MQTT_HOST=alpha.local MQTT_CLIENT_ID=controller PORT=80 NODE_ENV=prod pm2 start server/bin/www --name {{ webserver_name }}
+      become_user: pi
       args:
         chdir: "{{ current_path }}"
+      tags: pm2
     - name: Start garage controller
       shell: >
-        MQTT_HOST=alpha.local
-        MQTT_CLIENT_ID=garage-door-switch
-        sudo pm2 start mqtt-switch/garage.mqtt.js --name {{ switch_name }}
+        sudo MQTT_HOST=alpha.local MQTT_CLIENT_ID=garage-door-switch pm2 start mqtt-switch/garage.mqtt.js --name {{ switch_name }}
       args:
         chdir: "{{ current_path }}"
+      tags: pm2
     - name: Save the pm2 process list
-      shell: pm2 save
+      shell: sudo pm2 save
+      tags: pm2
     - name: Delete old dir
       shell: rm -rf {{ current_release_path.stdout }}/
       when: current_release_path.stdout != current_path
