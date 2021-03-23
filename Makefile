@@ -21,6 +21,6 @@ build-client: ## build web client
 start-local: build-client ## start local web server
 	cd server && bin/www
 
-deployment_branch = master
+deployment_branch = main
 deploy: ## deploy to deployment_branch
 	ansible-playbook -vv -i deployment/hosts deployment/deploy.yml -e deployment_branch=$(deployment_branch)

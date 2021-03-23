@@ -5,7 +5,7 @@
     git_repo_url: https://github.com/grocky/garage-remote.git
     webserver_name: garage-remote
     switch_name: garage-controller
-    deployment_branch: master
+    deployment_branch: main
   tasks:
     - name: Install pm2
       npm:
