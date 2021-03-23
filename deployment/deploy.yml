@@ -1,7 +1,7 @@
 ---
-- hosts: raspberrypi1
+- hosts: garage.local
   vars:
-    project_path: /home/pi/garage-remote
+    project_path: ~/garage-remote
     git_repo_url: https://github.com/grocky/garage-remote.git
     webserver_name: garage-remote
     switch_name: garage-controller
